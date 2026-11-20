@@ -1,6 +1,6 @@
-import { render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ProductCard } from './ProductCard'
 
 const product = {
@@ -101,5 +101,87 @@ describe('ProductCard', () => {
     render(<ProductCard product={product} onAddToCart={onAddToCart} />)
 
     expect(onAddToCart).not.toHaveBeenCalled()
+  })
+
+  describe('added feedback', () => {
+    beforeEach(() => {
+      vi.useFakeTimers()
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    const setup = () => {
+      const onAddToCart = vi.fn()
+      render(<ProductCard product={product} onAddToCart={onAddToCart} />)
+      const button = screen.getByRole('button', { name: /add to cart/i })
+      return { button, onAddToCart }
+    }
+
+    const advance = (ms: number) => {
+      act(() => {
+        vi.advanceTimersByTime(ms)
+      })
+    }
+
+    it('shows "Added!" after clicking the button', () => {
+      const { button } = setup()
+
+      fireEvent.click(button)
+
+      expect(screen.getByRole('button', { name: 'Added!' })).toBeInTheDocument()
+    })
+
+    it('styles the button in green while it shows "Added!"', () => {
+      const { button } = setup()
+
+      fireEvent.click(button)
+
+      expect(button).toHaveClass('bg-green-600')
+    })
+
+    it('keeps showing "Added!" before 1.5 seconds have passed', () => {
+      const { button } = setup()
+      fireEvent.click(button)
+
+      advance(1499)
+
+      expect(button).toHaveTextContent('Added!')
+    })
+
+    it('goes back to "Add to cart" after 1.5 seconds', () => {
+      const { button } = setup()
+      fireEvent.click(button)
+
+      advance(1500)
+
+      expect(button).toHaveTextContent(/add to cart/i)
+      expect(button).not.toHaveClass('bg-green-600')
+    })
+
+    it('still calls onAddToCart while showing "Added!"', () => {
+      const { button, onAddToCart } = setup()
+
+      fireEvent.click(button)
+      fireEvent.click(button)
+
+      expect(onAddToCart).toHaveBeenCalledTimes(2)
+    })
+
+    it('restarts the 1.5 seconds when clicked again during the transition', () => {
+      const { button } = setup()
+
+      fireEvent.click(button)
+      advance(1000)
+      fireEvent.click(button)
+      advance(1000)
+
+      expect(button).toHaveTextContent('Added!')
+
+      advance(500)
+
+      expect(button).toHaveTextContent(/add to cart/i)
+    })
   })
 })

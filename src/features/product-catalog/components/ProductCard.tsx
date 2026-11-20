@@ -1,5 +1,8 @@
+import { useEffect, useRef, useState } from 'react'
 import type { Product } from '@/shared/types'
 import { formatPrice } from '@/shared/utils'
+
+const ADDED_FEEDBACK_MS = 1500
 
 interface ProductCardProps {
   product: Product
@@ -7,6 +10,20 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, onAddToCart }: ProductCardProps) {
+  const [status, setStatus] = useState<'idle' | 'added'>('idle')
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined)
+
+  useEffect(() => () => clearTimeout(timeoutRef.current), [])
+
+  const handleClick = () => {
+    onAddToCart(product)
+    setStatus('added')
+    clearTimeout(timeoutRef.current)
+    timeoutRef.current = setTimeout(() => setStatus('idle'), ADDED_FEEDBACK_MS)
+  }
+
+  const isAdded = status === 'added'
+
   return (
     <div className="w-fit rounded-lg bg-white p-4 shadow-md">
       <img
@@ -28,10 +45,12 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
       <p className="text-gray-600">{formatPrice(product.price)}</p>
       <button
         type="button"
-        onClick={() => onAddToCart(product)}
-        className="mt-2 rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+        onClick={handleClick}
+        className={`mt-2 rounded px-4 py-2 text-white ${
+          isAdded ? 'bg-green-600' : 'bg-blue-600 hover:bg-blue-700'
+        }`}
       >
-        Add to cart
+        {isAdded ? 'Added!' : 'Add to cart'}
       </button>
     </div>
   )
