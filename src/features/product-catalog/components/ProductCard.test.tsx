@@ -8,6 +8,7 @@ const product = {
   name: 'Wireless Headphones',
   price: 29.99,
   image: '/images/headphones.jpg',
+  description: 'Over-ear Bluetooth headphones with noise cancellation.',
 }
 
 describe('ProductCard', () => {
@@ -47,6 +48,33 @@ describe('ProductCard', () => {
 
     expect(Number(image.getAttribute('width'))).toBeGreaterThan(0)
     expect(Number(image.getAttribute('height'))).toBeGreaterThan(0)
+  })
+
+  it('shows the product description', () => {
+    render(<ProductCard product={product} onAddToCart={vi.fn()} />)
+
+    expect(
+      screen.getByText('Over-ear Bluetooth headphones with noise cancellation.'),
+    ).toBeInTheDocument()
+  })
+
+  it('truncates long descriptions', () => {
+    render(<ProductCard product={product} onAddToCart={vi.fn()} />)
+
+    expect(
+      screen.getByText('Over-ear Bluetooth headphones with noise cancellation.'),
+    ).toHaveClass('line-clamp-2')
+  })
+
+  it('exposes the full description in a title attribute', () => {
+    render(<ProductCard product={product} onAddToCart={vi.fn()} />)
+
+    expect(
+      screen.getByText('Over-ear Bluetooth headphones with noise cancellation.'),
+    ).toHaveAttribute(
+      'title',
+      'Over-ear Bluetooth headphones with noise cancellation.',
+    )
   })
 
   it('has an "Add to cart" button', () => {

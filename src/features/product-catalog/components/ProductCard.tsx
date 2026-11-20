@@ -1,9 +1,4 @@
-interface Product {
-  id: number
-  name: string
-  price: number
-  image: string
-}
+import type { Product } from '@/shared/types'
 
 interface ProductCardProps {
   product: Product
@@ -23,6 +18,12 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
         className="mb-2 h-[200px] w-[300px] rounded object-cover"
       />
       <h3 className="text-lg font-semibold">{product.name}</h3>
+      <p
+        title={product.description}
+        className="line-clamp-2 max-w-[300px] text-sm text-gray-500"
+      >
+        {product.description}
+      </p>
       <p className="text-gray-600">${product.price.toFixed(2)}</p>
       <button
         type="button"
