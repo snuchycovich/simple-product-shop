@@ -1,4 +1,5 @@
 import type { Product } from '@/shared/types'
+import { formatPrice } from '@/shared/utils'
 
 interface ProductCardProps {
   product: Product
@@ -24,7 +25,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
       >
         {product.description}
       </p>
-      <p className="text-gray-600">${product.price.toFixed(2)}</p>
+      <p className="text-gray-600">{formatPrice(product.price)}</p>
       <button
         type="button"
         onClick={() => onAddToCart(product)}
