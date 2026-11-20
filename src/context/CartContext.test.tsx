@@ -151,4 +151,77 @@ describe('CartContext', () => {
     expect(result.current.items).toEqual(stored)
     expect(result.current.itemCount).toBe(4)
   })
+
+  describe('discounts', () => {
+    it('has no discount for an empty cart', () => {
+      const { result } = renderCart()
+
+      expect(result.current.discount).toBe(0)
+      expect(result.current.total).toBe(0)
+      expect(result.current.discountBreakdown).toEqual([])
+    })
+
+    it('has no discount when nothing qualifies, so total equals subtotal', () => {
+      const { result } = renderCart()
+
+      act(() => result.current.addItem(headphones))
+
+      expect(result.current.discount).toBe(0)
+      expect(result.current.total).toBe(result.current.subtotal)
+      expect(result.current.discountBreakdown).toEqual([])
+    })
+
+    it('applies the bulk discount automatically', () => {
+      const { result } = renderCart()
+      act(() => result.current.addItem(headphones))
+
+      act(() => result.current.updateQuantity(headphones.id, 5))
+
+      // subtotal: 10 × 5 = $50 → bulk 10% = $5
+      expect(result.current.discount).toBeCloseTo(5, 2)
+      expect(result.current.total).toBeCloseTo(45, 2)
+      expect(result.current.discountBreakdown).toEqual([
+        { name: 'Bulk Discount', amount: expect.closeTo(5, 2) },
+      ])
+    })
+
+    it('applies bulk and order discounts sequentially', () => {
+      const { result } = renderCart()
+      act(() => result.current.addItem(keyboard))
+
+      act(() => result.current.updateQuantity(keyboard.id, 5))
+
+      // subtotal: 25.5 × 5 = $127.50 → bulk -$12.75 → $114.75 → order -$17.2125
+      expect(result.current.discount).toBeCloseTo(29.9625, 3)
+      expect(result.current.total).toBeCloseTo(127.5 - 29.9625, 3)
+      expect(result.current.discountBreakdown.map(({ name }) => name)).toEqual([
+        'Bulk Discount',
+        'Order Discount',
+      ])
+    })
+
+    it('recalculates the discount when the items change', () => {
+      const { result } = renderCart()
+      act(() => result.current.addItem(headphones))
+      act(() => result.current.updateQuantity(headphones.id, 5))
+      expect(result.current.discount).toBeGreaterThan(0)
+
+      act(() => result.current.updateQuantity(headphones.id, 4))
+
+      expect(result.current.discount).toBe(0)
+      expect(result.current.total).toBe(result.current.subtotal)
+    })
+
+    it('has no discount after clearing the cart', () => {
+      const { result } = renderCart()
+      act(() => result.current.addItem(keyboard))
+      act(() => result.current.updateQuantity(keyboard.id, 5))
+
+      act(() => result.current.clearCart())
+
+      expect(result.current.discount).toBe(0)
+      expect(result.current.total).toBe(0)
+      expect(result.current.discountBreakdown).toEqual([])
+    })
+  })
 })

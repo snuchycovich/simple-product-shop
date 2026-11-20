@@ -1,9 +1,11 @@
-import { useEffect, useReducer, useRef, type ReactNode } from 'react'
+import { useEffect, useMemo, useReducer, useRef, type ReactNode } from 'react'
+import { DiscountCalculator } from '@/shared/strategies/DiscountCalculator'
 import type { CartItem, Product } from '@/shared/types'
 import { calculateSubtotal } from '@/shared/utils'
 import { CartContext } from './CartContextValue'
 
 const STORAGE_KEY = 'cart'
+const discountCalculator = new DiscountCalculator()
 
 type CartAction =
   | { type: 'ADD_ITEM'; product: Product }
@@ -65,10 +67,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
   }, [items])
 
+  const subtotal = calculateSubtotal(items)
+  const discountBreakdown = useMemo(
+    () => discountCalculator.getBreakdown(items),
+    [items],
+  )
+  const discount = discountBreakdown.reduce(
+    (total, { amount }) => total + amount,
+    0,
+  )
+
   const value = {
     items,
     itemCount: items.reduce((count, { quantity }) => count + quantity, 0),
-    subtotal: calculateSubtotal(items),
+    subtotal,
+    discount,
+    total: subtotal - discount,
+    discountBreakdown,
     addItem: (product: Product) => dispatch({ type: 'ADD_ITEM', product }),
     removeItem: (productId: number) =>
       dispatch({ type: 'REMOVE_ITEM', productId }),

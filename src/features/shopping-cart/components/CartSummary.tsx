@@ -1,17 +1,27 @@
 import { BUSINESS_RULES } from '@/shared/constants/businessRules'
+import type { DiscountBreakdown } from '@/shared/strategies/DiscountCalculator'
 import { formatPrice } from '@/shared/utils'
 
 const { MIN_SUBTOTAL, RATE } = BUSINESS_RULES.ORDER_DISCOUNT
+const ORDER_DISCOUNT_NAME = 'Order Discount'
 
 interface CartSummaryProps {
   subtotal: number
   discount: number
   total: number
   itemCount: number
+  discountBreakdown: DiscountBreakdown[]
 }
 
-export function CartSummary({ subtotal, discount, total }: CartSummaryProps) {
-  const showPromo = subtotal < MIN_SUBTOTAL
+export function CartSummary({
+  subtotal,
+  total,
+  discountBreakdown,
+}: CartSummaryProps) {
+  const orderDiscountApplied = discountBreakdown.some(
+    ({ name }) => name === ORDER_DISCOUNT_NAME,
+  )
+  const showPromo = !orderDiscountApplied && total < MIN_SUBTOTAL
 
   return (
     <div className="rounded-lg bg-gray-100 p-4 text-gray-900 dark:bg-gray-800 dark:text-gray-100">
@@ -20,12 +30,15 @@ export function CartSummary({ subtotal, discount, total }: CartSummaryProps) {
           <span>Subtotal</span>
           <span>{formatPrice(subtotal)}</span>
         </div>
-        {discount > 0 && (
-          <div className="flex justify-between text-green-700 dark:text-green-400">
-            <span>Discount</span>
-            <span>-{formatPrice(discount)}</span>
+        {discountBreakdown.map(({ name, amount }) => (
+          <div
+            key={name}
+            className="flex justify-between text-green-700 dark:text-green-400"
+          >
+            <span>{name}</span>
+            <span>-{formatPrice(amount)}</span>
           </div>
-        )}
+        ))}
       </div>
 
       <div className="mt-3 flex justify-between border-t border-gray-300 pt-3 text-xl font-bold dark:border-gray-600">
@@ -35,7 +48,7 @@ export function CartSummary({ subtotal, discount, total }: CartSummaryProps) {
 
       {showPromo && (
         <p className="mt-3 rounded bg-amber-100 p-2 text-sm font-medium text-amber-800 dark:bg-amber-900 dark:text-amber-200">
-          {`Add ${formatPrice(MIN_SUBTOTAL - subtotal)} more for ${Math.round(RATE * 100)}% off!`}
+          {`Add ${formatPrice(MIN_SUBTOTAL - total)} more for ${Math.round(RATE * 100)}% off!`}
         </p>
       )}
 
