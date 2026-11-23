@@ -1,4 +1,5 @@
 import { useCart } from '@/context/useCart'
+import { UI_TEXT } from '@/shared/constants/ui'
 import { CartItem, CartSummary } from './components'
 
 export function ShoppingCart() {
@@ -40,7 +41,7 @@ export function ShoppingCart() {
             <circle cx="18" cy="20" r="1" />
             <path d="M2 3h3l2.7 12.4a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.8L20 7H6" />
           </svg>
-          <p>Your cart is empty</p>
+          <p>{UI_TEXT.emptyCart}</p>
         </div>
       ) : (
         <>

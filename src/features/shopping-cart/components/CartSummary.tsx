@@ -1,9 +1,9 @@
 import { BUSINESS_RULES } from '@/shared/constants/businessRules'
+import { UI_TEXT } from '@/shared/constants/ui'
 import type { DiscountBreakdown } from '@/shared/strategies/DiscountCalculator'
-import { formatPrice } from '@/shared/utils'
+import { formatPercent, formatPrice } from '@/shared/utils'
 
 const { MIN_SUBTOTAL, RATE } = BUSINESS_RULES.ORDER_DISCOUNT
-const ORDER_DISCOUNT_NAME = 'Order Discount'
 
 interface CartSummaryProps {
   subtotal: number
@@ -19,7 +19,7 @@ export function CartSummary({
   discountBreakdown,
 }: CartSummaryProps) {
   const orderDiscountApplied = discountBreakdown.some(
-    ({ name }) => name === ORDER_DISCOUNT_NAME,
+    ({ name }) => name === UI_TEXT.orderDiscount,
   )
   const showPromo = !orderDiscountApplied && total < MIN_SUBTOTAL
 
@@ -48,7 +48,7 @@ export function CartSummary({
 
       {showPromo && (
         <p className="mt-3 rounded bg-amber-100 p-2 text-sm font-medium text-amber-800 dark:bg-amber-900 dark:text-amber-200">
-          {`Add ${formatPrice(MIN_SUBTOTAL - total)} more for ${Math.round(RATE * 100)}% off!`}
+          {`Add ${formatPrice(MIN_SUBTOTAL - total)} more for ${formatPercent(RATE)} off!`}
         </p>
       )}
 
@@ -56,7 +56,7 @@ export function CartSummary({
         type="button"
         className="mt-4 w-full rounded bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-700"
       >
-        Checkout
+        {UI_TEXT.checkout}
       </button>
     </div>
   )

@@ -1,5 +1,9 @@
+import { BUSINESS_RULES } from '@/shared/constants/businessRules'
+import { UI_TEXT } from '@/shared/constants/ui'
 import type { CartItem as CartItemType } from '@/shared/types'
 import { calculateSubtotal, formatPrice } from '@/shared/utils'
+
+const { MIN: MIN_QUANTITY } = BUSINESS_RULES.QUANTITY
 
 interface CartItemProps {
   item: CartItemType
@@ -33,7 +37,7 @@ export function CartItem({ item, onUpdateQuantity, onRemove }: CartItemProps) {
 
         <button
           type="button"
-          aria-label={`Remove ${product.name} from cart`}
+          aria-label={UI_TEXT.removeFromCart(product.name)}
           onClick={onRemove}
           className="order-3 shrink-0 rounded p-1.5 text-red-600 hover:bg-red-50 @xl:order-5 dark:text-red-400 dark:hover:bg-red-950"
         >
@@ -57,7 +61,7 @@ export function CartItem({ item, onUpdateQuantity, onRemove }: CartItemProps) {
               type="button"
               aria-label={`Decrease quantity of ${product.name}`}
               onClick={() => onUpdateQuantity(quantity - 1)}
-              disabled={quantity <= 1}
+              disabled={quantity <= MIN_QUANTITY}
               className="h-8 w-8 rounded bg-gray-200 text-gray-900 hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600"
             >
               −

@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useReducer, useRef, type ReactNode } from 'react'
+import { BUSINESS_RULES } from '@/shared/constants/businessRules'
 import { DiscountCalculator } from '@/shared/strategies/DiscountCalculator'
 import type { CartItem, Product } from '@/shared/types'
 import { calculateSubtotal } from '@/shared/utils'
 import { CartContext } from './CartContextValue'
 
+const { MIN: MIN_QUANTITY } = BUSINESS_RULES.QUANTITY
 const STORAGE_KEY = 'cart'
 const discountCalculator = new DiscountCalculator()
 
@@ -31,7 +33,7 @@ function cartReducer(items: CartItem[], action: CartAction): CartItem[] {
     case 'REMOVE_ITEM':
       return items.filter(({ product }) => product.id !== action.productId)
     case 'UPDATE_QUANTITY':
-      if (action.quantity <= 0) {
+      if (action.quantity < MIN_QUANTITY) {
         return items.filter(({ product }) => product.id !== action.productId)
       }
 
