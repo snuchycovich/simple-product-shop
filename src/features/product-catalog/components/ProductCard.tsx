@@ -25,7 +25,10 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
   const isAdded = status === 'added'
 
   return (
-    <div className="w-fit rounded-lg bg-white p-4 shadow-md">
+    <div
+      data-testid="product-card"
+      className="w-fit rounded-lg bg-white p-4 shadow-md"
+    >
       <img
         src={product.image}
         alt={product.name}
