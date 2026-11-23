@@ -11,4 +11,11 @@ export const BUSINESS_RULES = {
     MIN: 1,
     MAX: 99,
   },
+  LOGIN: {
+    MAX_FAILED_ATTEMPTS: 3,
+  },
+  PASSWORD: {
+    MIN_LENGTH: 12,
+    STRONG_LENGTH: 16,
+  },
 } as const
