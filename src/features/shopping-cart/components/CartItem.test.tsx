@@ -45,6 +45,16 @@ describe('CartItem', () => {
     expect(screen.getByText('3')).toBeInTheDocument()
   })
 
+  it('labels the quantity with the product name', () => {
+    renderCartItem()
+
+    const quantity = screen.getByRole('status', {
+      name: 'Quantity of Wireless Headphones: 3',
+    })
+
+    expect(quantity).toHaveTextContent('3')
+  })
+
   it('shows the subtotal (price × quantity)', () => {
     renderCartItem()
 

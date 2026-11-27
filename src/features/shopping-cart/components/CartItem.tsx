@@ -66,9 +66,12 @@ export function CartItem({ item, onUpdateQuantity, onRemove }: CartItemProps) {
             >
               −
             </button>
-            <span className="w-8 text-center text-gray-900 dark:text-gray-100">
+            <output
+              aria-label={`Quantity of ${product.name}: ${quantity}`}
+              className="w-8 text-center text-gray-900 dark:text-gray-100"
+            >
               {quantity}
-            </span>
+            </output>
             <button
               type="button"
               aria-label={`Increase quantity of ${product.name}`}

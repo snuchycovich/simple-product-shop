@@ -17,6 +17,9 @@
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
 
+  /* Focus ring: blue-600, 5.2:1 against white (WCAG 1.4.11 asks for 3:1) */
+  --focus-ring: #2563eb;
+
   font: 18px/145% var(--sans);
   letter-spacing: 0.18px;
   color-scheme: light dark;
@@ -42,6 +45,7 @@
     --accent: #c084fc;
     --accent-bg: rgba(192, 132, 252, 0.15);
     --accent-border: rgba(192, 132, 252, 0.5);
+    --focus-ring: #60a5fa; /* blue-400, 5.8:1 against gray-800 */
     --social-bg: rgba(47, 48, 58, 0.5);
     --shadow:
       rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
@@ -53,6 +57,33 @@
 }
 
 @layer base {
+  /* Keyboard focus: a visible ring, offset so it never overlaps the content */
+  :where(
+      a[href],
+      button,
+      input,
+      select,
+      textarea,
+      summary,
+      [tabindex]:not([tabindex='-1'])
+    ):focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  /* Mouse focus: no ring unless the browser considers it keyboard-like */
+  :where(
+      a[href],
+      button,
+      input,
+      select,
+      textarea,
+      summary,
+      [tabindex]:not([tabindex='-1'])
+    ):focus:not(:focus-visible) {
+    outline: none;
+  }
+
   #root {
     width: 1126px;
     max-width: 100%;

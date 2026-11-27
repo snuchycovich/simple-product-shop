@@ -2,6 +2,7 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { CartProvider } from '@/context/CartContext'
+import { useCart } from '@/context/useCart'
 import type { CartItem, Product } from '@/shared/types'
 import { ShoppingCart } from './ShoppingCart'
 
@@ -48,6 +49,14 @@ describe('ShoppingCart', () => {
       expect(screen.getByText('0')).toBeInTheDocument()
     })
 
+    it('describes the badge for screen readers', () => {
+      renderCart()
+
+      expect(
+        screen.getByRole('img', { name: '0 items in cart' }),
+      ).toBeInTheDocument()
+    })
+
     it('shows the empty cart message', () => {
       renderCart()
 
@@ -74,6 +83,22 @@ describe('ShoppingCart', () => {
       renderCart(items)
 
       expect(screen.getByText('3')).toBeInTheDocument()
+    })
+
+    it('describes the badge with the total number of items', () => {
+      renderCart(items)
+
+      expect(
+        screen.getByRole('img', { name: '3 items in cart' }),
+      ).toBeInTheDocument()
+    })
+
+    it('uses the singular in the badge description for one item', () => {
+      renderCart([{ product: headphones, quantity: 1 }])
+
+      expect(
+        screen.getByRole('img', { name: '1 item in cart' }),
+      ).toBeInTheDocument()
     })
 
     it('does not show the empty cart message', () => {
@@ -162,6 +187,104 @@ describe('ShoppingCart', () => {
       )
 
       expect(screen.getByText('Your cart is empty')).toBeInTheDocument()
+    })
+  })
+
+  describe('screen reader announcements', () => {
+    const getAnnouncer = () => screen.getByTestId('cart-announcer')
+
+    function AddHeadphonesButton() {
+      const { addItem } = useCart()
+      return (
+        <button type="button" onClick={() => addItem(headphones)}>
+          Add headphones
+        </button>
+      )
+    }
+
+    it('has a polite, atomic live region', () => {
+      renderCart()
+
+      expect(getAnnouncer()).toHaveAttribute('aria-live', 'polite')
+      expect(getAnnouncer()).toHaveAttribute('aria-atomic', 'true')
+    })
+
+    it('hides the live region visually with sr-only', () => {
+      renderCart()
+
+      expect(getAnnouncer()).toHaveClass('sr-only')
+    })
+
+    it('announces nothing on the first render', () => {
+      renderCart([{ product: headphones, quantity: 2 }])
+
+      expect(getAnnouncer()).toBeEmptyDOMElement()
+    })
+
+    it('announces the item count and total when a product is added', async () => {
+      const user = userEvent.setup()
+      localStorage.setItem(STORAGE_KEY, JSON.stringify([]))
+      render(
+        <CartProvider>
+          <AddHeadphonesButton />
+          <ShoppingCart />
+        </CartProvider>,
+      )
+
+      await user.click(screen.getByRole('button', { name: 'Add headphones' }))
+
+      expect(getAnnouncer()).toHaveTextContent(
+        'Cart updated: 1 item, total $10.00',
+      )
+    })
+
+    it.each([
+      {
+        scenario: 'the quantity increases',
+        quantity: 2,
+        button: 'Increase',
+        expected: 'Cart updated: 3 items, total $30.00',
+      },
+      {
+        scenario: 'the quantity decreases',
+        quantity: 2,
+        button: 'Decrease',
+        expected: 'Cart updated: 1 item, total $10.00',
+      },
+      {
+        // 10 × 5 = $50 → bulk 10% = $45
+        scenario: 'a discount starts to apply',
+        quantity: 4,
+        button: 'Increase',
+        expected: 'Cart updated: 5 items, total $45.00',
+      },
+    ])(
+      'announces the new count and total when $scenario',
+      async ({ quantity, button, expected }) => {
+        const user = userEvent.setup()
+        renderCart([{ product: headphones, quantity }])
+
+        await user.click(
+          screen.getByRole('button', {
+            name: `${button} quantity of Wireless Headphones`,
+          }),
+        )
+
+        expect(getAnnouncer()).toHaveTextContent(expected)
+      },
+    )
+
+    it('announces that the cart is empty after removing the last item', async () => {
+      const user = userEvent.setup()
+      renderCart([{ product: headphones, quantity: 1 }])
+
+      await user.click(
+        screen.getByRole('button', {
+          name: 'Remove Wireless Headphones from cart',
+        }),
+      )
+
+      expect(getAnnouncer()).toHaveTextContent('Cart is empty')
     })
   })
 })

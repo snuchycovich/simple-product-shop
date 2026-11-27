@@ -3,6 +3,7 @@ import type { Locator, Page } from '@playwright/test'
 export class ShoppingCartPage {
   readonly page: Page
   readonly container: Locator
+  readonly headerIcon: Locator
   readonly heading: Locator
   readonly emptyMessage: Locator
   readonly checkoutButton: Locator
@@ -12,6 +13,7 @@ export class ShoppingCartPage {
   constructor(page: Page) {
     this.page = page
     this.container = page.getByRole('complementary')
+    this.headerIcon = page.getByRole('img', { name: /^Cart with/ })
     this.heading = page.getByRole('heading', {
       name: 'Shopping Cart',
       exact: true,

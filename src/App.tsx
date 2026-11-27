@@ -3,6 +3,7 @@ import { useCart } from '@/context/useCart'
 import { LoginDemo } from '@/features/auth/LoginDemo'
 import { ProductCatalog } from '@/features/product-catalog/ProductCatalog'
 import { ShoppingCart } from '@/features/shopping-cart/ShoppingCart'
+import { UI_TEXT } from '@/shared/constants/ui'
 
 function Header() {
   const { itemCount } = useCart()
@@ -24,7 +25,7 @@ function Header() {
           </details>
           <div
             role="img"
-            aria-label={`Cart with ${itemCount} items`}
+            aria-label={`Cart with ${UI_TEXT.itemCount(itemCount)}`}
             className="relative text-gray-900 dark:text-gray-100"
           >
             <svg

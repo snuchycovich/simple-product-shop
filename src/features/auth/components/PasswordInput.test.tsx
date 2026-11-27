@@ -138,6 +138,24 @@ describe('PasswordInput', () => {
       }
     })
 
+    it('names the list of requirements', () => {
+      renderInput({ showRequirements: true })
+
+      expect(
+        screen.getByRole('list', { name: 'Password requirements' }),
+      ).toBeInTheDocument()
+    })
+
+    it('announces to screen readers whether each requirement is met', () => {
+      renderInput({ showRequirements: true, value: 'abc' })
+
+      expect(getRequirement(REQUIREMENTS.lowercase)).toHaveTextContent('Met')
+      expect(getRequirement(REQUIREMENTS.lowercase)).not.toHaveTextContent(
+        'Not met',
+      )
+      expect(getRequirement(REQUIREMENTS.length)).toHaveTextContent('Not met')
+    })
+
     it('marks every requirement as not met for an empty value', () => {
       renderInput({ showRequirements: true, value: '' })
 
@@ -199,6 +217,14 @@ describe('PasswordInput', () => {
 
   describe('strength indicator', () => {
     const getBar = () => screen.getByRole('meter', { name: /strength/i })
+
+    it('names the meter "Password strength"', () => {
+      renderInput()
+
+      expect(
+        screen.getByRole('meter', { name: 'Password strength' }),
+      ).toBeInTheDocument()
+    })
 
     it('shows the indicator even when the requirements are hidden', () => {
       renderInput({ showRequirements: false })

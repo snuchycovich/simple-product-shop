@@ -11,6 +11,12 @@ const product = {
   description: 'Over-ear Bluetooth headphones with noise cancellation.',
 }
 
+const advance = (ms: number) => {
+  act(() => {
+    vi.advanceTimersByTime(ms)
+  })
+}
+
 describe('ProductCard', () => {
   it('shows the product name', () => {
     render(<ProductCard product={product} onAddToCart={vi.fn()} />)
@@ -85,6 +91,14 @@ describe('ProductCard', () => {
     ).toBeInTheDocument()
   })
 
+  it('describes the add to cart button with the product name for screen readers', () => {
+    render(<ProductCard product={product} onAddToCart={vi.fn()} />)
+
+    expect(
+      screen.getByRole('button', { name: /add to cart/i }),
+    ).toHaveAccessibleDescription('Wireless Headphones')
+  })
+
   it('calls onAddToCart with the product when the button is clicked', async () => {
     const user = userEvent.setup()
     const onAddToCart = vi.fn()
@@ -117,12 +131,6 @@ describe('ProductCard', () => {
       render(<ProductCard product={product} onAddToCart={onAddToCart} />)
       const button = screen.getByRole('button', { name: /add to cart/i })
       return { button, onAddToCart }
-    }
-
-    const advance = (ms: number) => {
-      act(() => {
-        vi.advanceTimersByTime(ms)
-      })
     }
 
     it('shows "Added!" after clicking the button', () => {
@@ -182,6 +190,177 @@ describe('ProductCard', () => {
       advance(500)
 
       expect(button).toHaveTextContent(/add to cart/i)
+    })
+  })
+
+  describe('async add to cart', () => {
+    beforeEach(() => {
+      vi.useFakeTimers()
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    const setup = () => {
+      let resolveAdd: (() => void) | undefined
+      let rejectAdd: ((error: Error) => void) | undefined
+      const onAddToCart = vi.fn(
+        () =>
+          new Promise<void>((resolve, reject) => {
+            resolveAdd = resolve
+            rejectAdd = reject
+          }),
+      )
+      render(<ProductCard product={product} onAddToCart={onAddToCart} />)
+      const button = screen.getByRole('button', { name: /add to cart/i })
+
+      return {
+        button,
+        onAddToCart,
+        succeed: () => act(async () => resolveAdd?.()),
+        fail: () => act(async () => rejectAdd?.(new Error('Network error'))),
+      }
+    }
+
+    it('shows "Adding..." in gray with a spinner as soon as the button is clicked', () => {
+      const { button } = setup()
+
+      fireEvent.click(button)
+
+      expect(button).toHaveTextContent('Adding...')
+      expect(button).toHaveClass('bg-gray-500')
+      expect(button.querySelector('.animate-spin')).toBeInTheDocument()
+    })
+
+    it('disables the button while loading and ignores extra clicks', () => {
+      const { button, onAddToCart } = setup()
+
+      fireEvent.click(button)
+      fireEvent.click(button)
+
+      expect(button).toBeDisabled()
+      expect(button).toHaveAttribute('aria-busy', 'true')
+      expect(onAddToCart).toHaveBeenCalledTimes(1)
+    })
+
+    it('shows "Added!" in green with a checkmark when the promise resolves', async () => {
+      const { button, succeed } = setup()
+      fireEvent.click(button)
+
+      await succeed()
+
+      expect(button).toHaveTextContent('Added!')
+      expect(button).toHaveClass('bg-green-600')
+      expect(button).toBeEnabled()
+      expect(button).not.toHaveAttribute('aria-busy', 'true')
+      expect(button).toHaveTextContent('✓')
+    })
+
+    it('shows "Failed" in red with a retry option when the promise rejects', async () => {
+      const { button, fail } = setup()
+      fireEvent.click(button)
+
+      await fail()
+
+      expect(button).toHaveTextContent('Failed')
+      expect(button).toHaveTextContent(/retry/i)
+      expect(button).toHaveClass('bg-red-600')
+      expect(button).toBeEnabled()
+    })
+
+    it('shows "Failed" when onAddToCart throws synchronously', () => {
+      const onAddToCart = vi.fn(() => {
+        throw new Error('Out of stock')
+      })
+      render(<ProductCard product={product} onAddToCart={onAddToCart} />)
+      const button = screen.getByRole('button', { name: /add to cart/i })
+
+      fireEvent.click(button)
+
+      expect(button).toHaveTextContent('Failed')
+      expect(button).toHaveClass('bg-red-600')
+    })
+
+    it('calls onAddToCart again and goes back to loading when retrying', async () => {
+      const { button, onAddToCart, fail, succeed } = setup()
+      fireEvent.click(button)
+      await fail()
+
+      fireEvent.click(button)
+
+      expect(onAddToCart).toHaveBeenCalledTimes(2)
+      expect(button).toHaveTextContent('Adding...')
+
+      await succeed()
+
+      expect(button).toHaveTextContent('Added!')
+    })
+
+    it('goes back to idle 1.5 seconds after succeeding', async () => {
+      const { button, succeed } = setup()
+      fireEvent.click(button)
+      await succeed()
+
+      advance(1499)
+      expect(button).toHaveTextContent('Added!')
+
+      advance(1)
+      expect(button).toHaveTextContent(/add to cart/i)
+      expect(button).toHaveClass('bg-blue-600')
+    })
+
+    it('goes back to idle 3 seconds after failing', async () => {
+      const { button, fail } = setup()
+      fireEvent.click(button)
+      await fail()
+
+      advance(2999)
+      expect(button).toHaveTextContent('Failed')
+
+      advance(1)
+      expect(button).toHaveTextContent(/add to cart/i)
+      expect(button).toHaveClass('bg-blue-600')
+    })
+
+    it('shows no timer-based change while the request is still loading', () => {
+      const { button } = setup()
+      fireEvent.click(button)
+
+      advance(10_000)
+
+      expect(button).toHaveTextContent('Adding...')
+    })
+
+    it('announces each state to screen readers', async () => {
+      const { button, succeed, fail } = setup()
+      const announcement = screen.getByRole('status')
+      expect(announcement).toBeEmptyDOMElement()
+
+      fireEvent.click(button)
+      expect(announcement).toHaveTextContent('Adding Wireless Headphones to cart')
+
+      await succeed()
+      expect(announcement).toHaveTextContent('Wireless Headphones added to cart')
+
+      fireEvent.click(button)
+      await fail()
+      expect(announcement).toHaveTextContent(
+        'Could not add Wireless Headphones to cart',
+      )
+    })
+
+    it('does not leave timers behind when unmounted while loading', async () => {
+      const onAddToCart = vi.fn(() => Promise.resolve())
+      const { unmount } = render(
+        <ProductCard product={product} onAddToCart={onAddToCart} />,
+      )
+
+      fireEvent.click(screen.getByRole('button', { name: /add to cart/i }))
+      unmount()
+      await act(async () => undefined)
+
+      expect(vi.getTimerCount()).toBe(0)
     })
   })
 })

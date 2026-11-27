@@ -23,6 +23,7 @@ test.describe('Shopping journey', () => {
     await expect(cart.heading).toBeVisible()
     await expect(cart.emptyMessage).toBeVisible()
     await expect(cart.checkoutButton).toBeHidden()
+    await expect(cart.headerIcon).toHaveAccessibleName('Cart with 0 items')
   })
 
   test('adding a product shows it in the cart', async () => {
@@ -34,6 +35,7 @@ test.describe('Shopping journey', () => {
     await expect(cart.subtotal).toHaveText('$39.50')
     await expect(cart.total).toHaveText('$39.50')
     await expect(cart.checkoutButton).toBeVisible()
+    await expect(cart.headerIcon).toHaveAccessibleName('Cart with 1 item')
   })
 
   test('adding the same product again increments its quantity', async () => {
@@ -43,6 +45,7 @@ test.describe('Shopping journey', () => {
     await expect(cart.getItem(PRODUCT)).toHaveCount(1)
     await expect.poll(() => cart.getQuantity(PRODUCT)).toBe(2)
     await expect(cart.subtotal).toHaveText('$79.00')
+    await expect(cart.headerIcon).toHaveAccessibleName('Cart with 2 items')
   })
 
   test('the + and - buttons change the quantity', async () => {

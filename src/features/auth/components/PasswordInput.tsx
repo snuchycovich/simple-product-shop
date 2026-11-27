@@ -76,7 +76,7 @@ export function PasswordInput({
         <div className="h-2 w-full overflow-hidden rounded bg-gray-200 dark:bg-gray-700">
           <div
             role="meter"
-            aria-label="Strength"
+            aria-label="Password strength"
             aria-valuemin={0}
             aria-valuemax={3}
             aria-valuenow={level}
@@ -90,7 +90,7 @@ export function PasswordInput({
       </div>
 
       {showRequirements && (
-        <ul className="space-y-1 text-sm">
+        <ul aria-label="Password requirements" className="space-y-1 text-sm">
           {PASSWORD_RULES.map((rule) => {
             const isMet = rule.passes(value)
 
@@ -106,6 +106,7 @@ export function PasswordInput({
               >
                 <span aria-hidden="true">{isMet ? '✓' : '✗'}</span>
                 <span>{rule.label}</span>
+                <span className="sr-only">{isMet ? 'Met' : 'Not met'}</span>
               </li>
             )
           })}

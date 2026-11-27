@@ -3,7 +3,7 @@ import type { Product } from '@/shared/types'
 import { ProductCard } from './components/ProductCard'
 
 interface ProductCatalogProps {
-  onAddToCart: (product: Product) => void
+  onAddToCart: (product: Product) => void | Promise<void>
 }
 
 export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
